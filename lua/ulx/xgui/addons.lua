@@ -1,4 +1,6 @@
-local gmau_addon_settings = xlib.makepanel{parent = xgui.null}
+local gmau_addon_settings = xlib.makepanel{
+	parent = xgui.null
+}
 
 xlib.makelabel{
 	x = 5,
@@ -26,10 +28,7 @@ gmau_addon_settings.catList = xlib.makelistview{
 }
 
 gmau_addon_settings.catList:AddColumn("Addon Settings")
-
-gmau_addon_settings.catList.Columns[1].DoClick = function()
-
-end
+gmau_addon_settings.catList.Columns[1].DoClick = function() end
 
 gmau_addon_settings.catList.OnRowSelected = function(self, LineID, Line)
 	local nPanel = xgui.modules.submodule[Line:GetValue(2)].panel
@@ -52,7 +51,6 @@ gmau_addon_settings.catList.OnRowSelected = function(self, LineID, Line)
 		end
 
 		xlib.animQueue_start()
-
 		gmau_addon_settings.curPanel = nPanel
 	else
 		xlib.addToAnimQueue("pnlSlide", {
@@ -63,10 +61,9 @@ gmau_addon_settings.catList.OnRowSelected = function(self, LineID, Line)
 			endy = 0,
 			setvisible = false
 		})
+
 		self:ClearSelection()
-
 		gmau_addon_settings.curPanel = nil
-
 		xlib.animQueue_start()
 	end
 
@@ -88,13 +85,13 @@ function gmau_addon_settings.processModules()
 				module.panel:SetSize(275, 322)
 			end
 
-			if module.panel.scroll then --For DListLayouts
+			--For DListLayouts
+			if module.panel.scroll then
 				module.panel.scroll.panel = module.panel
 				module.panel = module.panel.scroll
 			end
 
 			module.panel:SetParent(gmau_addon_settings.panel)
-
 			local line = gmau_addon_settings.catList:AddLine(module.name, i)
 
 			if module.panel == gmau_addon_settings.curPanel then
@@ -110,8 +107,6 @@ function gmau_addon_settings.processModules()
 end
 
 gmau_addon_settings.processModules()
-
 xgui.hookEvent("onProcessModules", nil, gmau_addon_settings.processModules)
 xgui.addModule("Addons", gmau_addon_settings, "icon16/addons.png", "xgui_gmsettings")
-
 hook.Run("GMAU UlxModifyAddonSettings", "gmau_addon_settings")

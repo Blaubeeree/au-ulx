@@ -2,6 +2,5 @@
 if SERVER then
 	resource.AddFile("materials/icon16/addons.png")
 	resource.AddFile("materials/icon16/gmau.png")
-
 	resource.AddWorkshop("314701418")
 end

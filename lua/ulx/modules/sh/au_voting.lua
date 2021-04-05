@@ -1,9 +1,7 @@
 local CATEGORY_NAME = "Voting"
 local gamemode_error = "The current gamemode is not among us!"
 
-
 ---[Next Round Slay Voting]----------------------------------------------------------------------------
-
 local function voteslaynrDone2(t, target, time, ply, reason)
 	local shouldslaynr = false
 
@@ -29,7 +27,7 @@ local function voteslaynrDone2(t, target, time, ply, reason)
 				target:SetPData("slaynr_reason", reason)
 			end
 
-			GAMEMODE:Player_MarkCrew(target_ply)
+			GAMEMODE:Player_MarkCrew(target)
 			target:ChatPrint("Based on a vote, you will be slain next round")
 		end
 	end
@@ -59,7 +57,7 @@ local function voteslaynrDone(t, target, time, ply, reason)
 		ulx.doVote("Accept result and slay " .. target:Nick() .. "?", {"Yes", "No"}, voteslaynrDone2, 30000, {ply}, true, target, time, ply, reason)
 	end
 
-	ULib.tsay(_, str) 
+	ULib.tsay(_, str)
 	ulx.logString(str)
 
 	if game.IsDedicated() then
@@ -81,12 +79,22 @@ function ulx.voteslaynr(calling_ply, target_ply, reason)
 	end
 
 	ulx.doVote(msg, {"Yes", "No"}, voteslaynrDone, nil, nil, nil, target_ply, nil, calling_ply, reason)
+
 	ulx.fancyLogAdmin(calling_ply, "#A wants to have #T slain next round", target_ply)
 end
 
 local voteslaynr = ulx.command(CATEGORY_NAME, "ulx votesnr", ulx.voteslaynr, "!votesnr")
-voteslaynr:addParam{type = ULib.cmds.PlayerArg}
-voteslaynr:addParam{type = ULib.cmds.StringArg, hint = "Reason", ULib.cmds.optional, ULib.cmds.takeRestOfLine}
+
+voteslaynr:addParam{
+	type = ULib.cmds.PlayerArg
+}
+
+voteslaynr:addParam{
+	type = ULib.cmds.StringArg,
+	hint = "Reason",
+	ULib.cmds.optional, ULib.cmds.takeRestOfLine
+}
+
 voteslaynr:defaultAccess(ULib.ACCESS_ADMIN)
 voteslaynr:help("Starts a vote to have the target slain the next round.")
 
@@ -104,7 +112,6 @@ local function votefsDone2(t, target, time, ply, reason)
 
 	if t.results[1] and t.results[1] > 0 then
 		shouldfs = true
-
 		ulx.fancyLogAdmin(ply, "#A will allow #T to be forced to spectate.", target)
 	else
 		ulx.fancyLogAdmin(ply, "#A will not allow #T to be forced to spectate.", target)
@@ -167,12 +174,22 @@ function ulx.votefs(calling_ply, target_ply, reason)
 	end
 
 	ulx.doVote(msg, {"Yes", "No"}, votefsDone, nil, nil, nil, target_ply, time, calling_ply, reason)
+
 	ulx.fancyLogAdmin(calling_ply, "#A wants to have #T moved to spectator.", target_ply)
 end
 
 local votefs = ulx.command(CATEGORY_NAME, "ulx votefs", ulx.votefs, "!votefs")
-votefs:addParam{type = ULib.cmds.PlayerArg}
-votefs:addParam{type = ULib.cmds.StringArg, hint = "Reason", ULib.cmds.optional, ULib.cmds.takeRestOfLine}
+
+votefs:addParam{
+	type = ULib.cmds.PlayerArg
+}
+
+votefs:addParam{
+	type = ULib.cmds.StringArg,
+	hint = "Reason",
+	ULib.cmds.optional, ULib.cmds.takeRestOfLine
+}
+
 votefs:defaultAccess(ULib.ACCESS_ADMIN)
 votefs:help("Starts a vote to have the target forced into spectator mode.")
 

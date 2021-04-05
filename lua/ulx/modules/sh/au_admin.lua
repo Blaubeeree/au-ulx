@@ -21,10 +21,9 @@ end
 --]]
 local function corpse_find(v)
 	v = v:GetAUPlayerTable()
+
 	for _, ent in pairs(ents.FindByClass("prop_ragdoll")) do
-		if ent:GetDTInt(15) == v.id and IsValid(ent) then
-			return ent or false
-		end
+		if ent:GetDTInt(15) == v.id and IsValid(ent) then return ent or false end
 	end
 end
 
@@ -33,11 +32,13 @@ end
 --]]
 local function player_respawn(v)
 	local corpse = corpse_find(v)
+
 	if corpse then
 		corpse:Remove()
 	end
 
 	local plyTable = v:GetAUPlayerTable()
+
 	if IsValid(plyTable.entity) then
 		plyTable.entity:SetRenderMode(RENDERMODE_NORMAL)
 		plyTable.entity:SetMoveType(MOVETYPE_WALK)
@@ -47,9 +48,6 @@ local function player_respawn(v)
 	GAMEMODE.GameData.DeadPlayers[plyTable] = nil
 	GAMEMODE:Net_BroadcastDeadToGhosts()
 end
---[End]----------------------------------------------------------------------------------------
-
-
 
 --[Slay next round]---------------------------------------------------------------------------------
 --[[ulx.slaynr][Slays < target(s) > at the start of the next round.]
@@ -70,7 +68,6 @@ function ulx.slaynr(calling_ply, target_ply, num_slay, reason)
 			if num_slay > 0 then
 				target_ply:SetPData("slaynr_slays", num_slay)
 				target_ply:SetPData("slaynr_reason", reason)
-
 				GAMEMODE:Player_MarkCrew(target_ply)
 			else
 				target_ply:RemovePData("slaynr_slays")
@@ -93,9 +90,25 @@ function ulx.slaynr(calling_ply, target_ply, num_slay, reason)
 end
 
 local slaynr = ulx.command(CATEGORY_NAME, "ulx slaynr", ulx.slaynr, "!slaynr")
-slaynr:addParam{type = ULib.cmds.PlayerArg}
-slaynr:addParam{type = ULib.cmds.NumArg, max = 100, default = 1, hint = "rounds", ULib.cmds.optional, ULib.cmds.round}
-slaynr:addParam{type = ULib.cmds.StringArg, hint = "reason",  ULib.cmds.optional}
+
+slaynr:addParam{
+	type = ULib.cmds.PlayerArg
+}
+
+slaynr:addParam{
+	type = ULib.cmds.NumArg,
+	max = 100,
+	default = 1,
+	hint = "rounds",
+	ULib.cmds.optional, ULib.cmds.round
+}
+
+slaynr:addParam{
+	type = ULib.cmds.StringArg,
+	hint = "reason",
+	ULib.cmds.optional
+}
+
 slaynr:defaultAccess(ULib.ACCESS_ADMIN)
 slaynr:help("Slays target(s) for a number of rounds")
 
@@ -142,7 +155,9 @@ hook.Add("GMAU GameStart", "SlayPlayersNextRound", function()
 	local slay_message_context
 
 	if #slayedPlayers == 1 then
-		slay_message_context = "was" else slay_message_context = "were"
+		slay_message_context = "was"
+	else
+		slay_message_context = "were"
 	end
 
 	if #slayedPlayers ~= 0 then
@@ -174,8 +189,6 @@ hook.Add("PlayerSpawn", "Inform", function(ply)
 		ply:ChatPrint(chat_message)
 	end
 end)
---[End]----------------------------------------------------------------------------------------
-
 
 --[Force role]---------------------------------------------------------------------------------
 --[[ulx.force][Forces < target(s) > to become a specified role.]
@@ -207,9 +220,11 @@ function ulx.force(calling_ply, target_plys, target_role, should_silent)
 
 				for _, ply in ipairs(player.GetAll()) do
 					net.Start("UpdateImposters")
+
 					if (ply:IsImposter()) then
 						net.WriteTable(GAMEMODE.GameData.Imposters)
 					end
+
 					net.Send(ply)
 				end
 
@@ -223,11 +238,27 @@ function ulx.force(calling_ply, target_plys, target_role, should_silent)
 end
 
 local force = ulx.command(CATEGORY_NAME, "ulx force", ulx.force, "!force")
-force:addParam{type = ULib.cmds.PlayersArg}
-force:addParam{type = ULib.cmds.StringArg, completes = {"imposter", "crewmate"}, hint = "- Select Role -", ULib.cmds.restrictToCompletes}
-force:addParam{type = ULib.cmds.BoolArg, invisible = true}
+
+force:addParam{
+	type = ULib.cmds.PlayersArg
+}
+
+force:addParam{
+	type = ULib.cmds.StringArg,
+	completes = {"imposter", "crewmate"},
+	hint = "- Select Role -",
+	ULib.cmds.restrictToCompletes
+}
+
+force:addParam{
+	type = ULib.cmds.BoolArg,
+	invisible = true
+}
+
 force:defaultAccess(ULib.ACCESS_SUPERADMIN)
+
 force:setOpposite("ulx sforce", {nil, nil, nil, true}, "!sforce", true)
+
 force:help("Force <target(s)> to become a specified role.")
 
 --[Helper Functions]---------------------------------------------------------------------------
@@ -238,9 +269,6 @@ else
 		GAMEMODE.GameData.Imposters = net.ReadTable() or nil
 	end)
 end
---[End]----------------------------------------------------------------------------------------
-
-
 
 --[Respawn]------------------------------------------------------------------------------------
 --[[ulx.respawn][Respawns < target(s) > ]
@@ -261,30 +289,28 @@ function ulx.respawn(calling_ply, target_plys, should_silent)
 				ULib.tsayError(calling_ply, ulx.getExclusive(v, calling_ply), true)
 			elseif GAMEMODE:SetGameCommencing() then
 				ULib.tsayError(calling_ply, "Waiting for players!", true)
-			elseif not v:GetAUPlayerTable() then -- players arent really dead when they are spectating, we need to handle that correctly
+			elseif not v:GetAUPlayerTable() then
+				-- players arent really dead when they are spectating, we need to handle that correctly
 				v:ConCommand("au_spectator_mode 0") -- just incase they are in spectator mode take them out of it
 
-				timer.Create("respawndelay", 0.1, 0, function() --seems to be a slight delay from when you leave spec and when you can spawn this should get us around that
-				  player_respawn(v)
-
+				--seems to be a slight delay from when you leave spec and when you can spawn this should get us around that
+				timer.Create("respawndelay", 0.1, 0, function()
+					player_respawn(v)
 					table.insert(affected_plys, v)
-
 					ulx.fancyLogAdmin(calling_ply, should_silent, "#A respawned #T!", affected_plys)
 					send_messages(affected_plys, "You have been respawned.")
 
 					if not v:IsDead() then
 						timer.Remove("respawndelay")
+
 						return
 					end
 				end)
-
 			elseif not v:IsDead() then
 				ULib.tsayError(calling_ply, v:Nick() .. " is already alive!", true)
 			else
 				player_respawn(v)
-
 				table.insert(affected_plys, v)
-
 				ulx.fancyLogAdmin(calling_ply, should_silent, "#A respawned #T!", affected_plys)
 				send_messages(affected_plys, "You have been respawned.")
 			end
@@ -293,14 +319,21 @@ function ulx.respawn(calling_ply, target_plys, should_silent)
 end
 
 local respawn = ulx.command(CATEGORY_NAME, "ulx respawn", ulx.respawn, "!respawn")
-respawn:addParam{type = ULib.cmds.PlayersArg}
-respawn:addParam{type = ULib.cmds.BoolArg, invisible = true}
+
+respawn:addParam{
+	type = ULib.cmds.PlayersArg
+}
+
+respawn:addParam{
+	type = ULib.cmds.BoolArg,
+	invisible = true
+}
+
 respawn:defaultAccess(ULib.ACCESS_SUPERADMIN)
+
 respawn:setOpposite("ulx srespawn", {nil, nil, true}, "!srespawn", true)
+
 respawn:help("Respawns <target(s)>.")
---[End]----------------------------------------------------------------------------------------
-
-
 
 --[Respawn teleport]---------------------------------------------------------------------------
 --[[ulx.respawntp][Respawns < target(s) > ]
@@ -316,6 +349,7 @@ function ulx.respawntp(calling_ply, target_ply, should_silent)
 
 		if not calling_ply:IsValid() then
 			Msg("You are the console, you can't teleport or teleport others since you can't see the world!\n")
+
 			return
 		elseif ulx.getExclusive(target_ply, calling_ply) then
 			ULib.tsayError(calling_ply, ulx.getExclusive(target_ply, calling_ply), true)
@@ -324,7 +358,8 @@ function ulx.respawntp(calling_ply, target_ply, should_silent)
 		elseif target_ply:GetAUPlayerTable() then
 			target_ply:ConCommand("au_spectator_mode 0")
 
-			timer.Create("respawntpdelay", 0.1, 0, function() --have to wait for gamemode before doing this
+			--have to wait for gamemode before doing this
+			timer.Create("respawntpdelay", 0.1, 0, function()
 				local t = {}
 				t.start = calling_ply:GetPos() + Vector(0, 0, 32) -- Move them up a bit so they can travel across the ground
 				t.endpos = calling_ply:GetPos() + calling_ply:EyeAngles():Forward() * 16384
@@ -336,18 +371,15 @@ function ulx.respawntp(calling_ply, target_ply, should_silent)
 
 				local tr = util.TraceEntity(t, target_ply)
 				local pos = tr.HitPos
-
 				player_respawn(target_ply)
-
 				target_ply:SetPos(pos)
-
 				table.insert(affected_ply, target_ply)
-
 				ulx.fancyLogAdmin(calling_ply, should_silent, "#A respawned and teleported #T!", affected_ply)
 				send_messages(target_ply, "You have been respawned and teleported.")
 
 				if not target_ply:IsDead() then
 					timer.Remove("respawntpdelay")
+
 					return
 				end
 			end)
@@ -365,13 +397,9 @@ function ulx.respawntp(calling_ply, target_ply, should_silent)
 
 			local tr = util.TraceEntity(t, target_ply)
 			local pos = tr.HitPos
-
 			player_respawn(target_ply)
-
 			target_ply:SetPos(pos)
-
 			table.insert(affected_ply, target_ply)
-
 			ulx.fancyLogAdmin(calling_ply, should_silent, "#A respawned and teleported #T!", affected_ply)
 			send_messages(target_ply, "You have been respawned and teleported.")
 		end
@@ -379,14 +407,21 @@ function ulx.respawntp(calling_ply, target_ply, should_silent)
 end
 
 local respawntp = ulx.command(CATEGORY_NAME, "ulx respawntp", ulx.respawntp, "!respawntp")
-respawntp:addParam{type = ULib.cmds.PlayerArg}
-respawntp:addParam{type = ULib.cmds.BoolArg, invisible = true}
+
+respawntp:addParam{
+	type = ULib.cmds.PlayerArg
+}
+
+respawntp:addParam{
+	type = ULib.cmds.BoolArg,
+	invisible = true
+}
+
 respawntp:defaultAccess(ULib.ACCESS_SUPERADMIN)
+
 respawntp:setOpposite("ulx srespawntp", {nil, nil, true}, "!srespawntp", true)
+
 respawntp:help("Respawns <target> to a specific location.")
---[End]----------------------------------------------------------------------------------------
-
-
 
 --[Toggle spectator]---------------------------------------------------------------------------
 --[[ulx.spec][Forces < target(s) > to and from spectator.]
@@ -418,14 +453,21 @@ function ulx.spec(calling_ply, target_plys, should_unspec)
 end
 
 local spec = ulx.command(CATEGORY_NAME, "ulx fspec", ulx.spec, "!fspec")
-spec:addParam{type = ULib.cmds.PlayersArg}
-spec:addParam{type = ULib.cmds.BoolArg, invisible = true}
+
+spec:addParam{
+	type = ULib.cmds.PlayersArg
+}
+
+spec:addParam{
+	type = ULib.cmds.BoolArg,
+	invisible = true
+}
+
 spec:defaultAccess(ULib.ACCESS_ADMIN)
+
 spec:setOpposite("ulx unspec", {nil, nil, true}, "!unspec")
+
 spec:help("Forces the <target(s)> to/from spectator.")
---[End]----------------------------------------------------------------------------------------
-
-
 
 --[Force next round]-------------------------------------------------------------------------
 --[[ulx.spec][Forces < target(s) > to and from spectator.]
@@ -449,23 +491,18 @@ function ulx.forcenr(calling_ply, target_plys, next_round)
 				else
 					GAMEMODE:Player_UnMark(v)
 					GAMEMODE:Player_MarkImposter(v)
-
 					table.insert(affected_plys, v)
 				end
-
 			elseif next_round == "crewmate" then
 				if GAMEMODE.PlayersMarkedForCrew[id] then
 					ULib.tsayError(calling_ply, "That player is already marked for the next round!", true)
 				else
 					GAMEMODE:Player_UnMark(v)
 					GAMEMODE:Player_MarkCrew(v)
-
 					table.insert(affected_plys, v)
 				end
-
 			elseif next_round == "unmark" then
 				GAMEMODE:Player_UnMark(v)
-
 				table.insert(affected_plys, v)
 			end
 		end
@@ -479,8 +516,19 @@ function ulx.forcenr(calling_ply, target_plys, next_round)
 end
 
 local fnr = ulx.command(CATEGORY_NAME, "ulx forcenr", ulx.forcenr, "!nr")
-fnr:addParam{type = ULib.cmds.PlayersArg}
-fnr:addParam{type = ULib.cmds.StringArg, completes = {"imposter", "crewmate", "unmark"}, hint = "- Select Role -", error = "invalid role \"%s\" specified", ULib.cmds.restrictToCompletes}
+
+fnr:addParam{
+	type = ULib.cmds.PlayersArg
+}
+
+fnr:addParam{
+	type = ULib.cmds.StringArg,
+	completes = {"imposter", "crewmate", "unmark"},
+	hint = "- Select Role -",
+	error = "invalid role \"%s\" specified",
+	ULib.cmds.restrictToCompletes
+}
+
 fnr:defaultAccess(ULib.ACCESS_SUPERADMIN)
 fnr:help("Forces the target to be a special role in the following round. Doesn't overwrite the imposter count and therefor will be ignored if too many players are marked.")
 
@@ -500,8 +548,15 @@ end
 
 hook.Add("OnGamemodeLoaded", "AddRoundrestartCommand", function()
 	local restartround = ulx.command(CATEGORY_NAME, "ulx roundrestart", ulx.roundrestart)
-	restartround:addParam{type = ULib.cmds.StringArg, completes = table.GetKeys(GAMEMODE.GameOverReason), hint = "- Select Winner -", error = "invalid winner \"%s\" specified", ULib.cmds.restrictToCompletes}
+
+	restartround:addParam{
+		type = ULib.cmds.StringArg,
+		completes = table.GetKeys(GAMEMODE.GameOverReason),
+		hint = "- Select Winner -",
+		error = "invalid winner \"%s\" specified",
+		ULib.cmds.restrictToCompletes
+	}
+
 	restartround:defaultAccess(ULib.ACCESS_SUPERADMIN)
 	restartround:help("Restarts the round.")
 end)
----[End]----------------------------------------------------------------------------------------

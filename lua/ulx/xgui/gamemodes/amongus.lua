@@ -1,6 +1,7 @@
 -- Defines ttt cvar limits and ttt specific settings for the among us gamemode.
-
-local gmau_settings = xlib.makepanel{parent = xgui.null}
+local gmau_settings = xlib.makepanel{
+	parent = xgui.null
+}
 
 xlib.makelabel{
 	x = 5,
@@ -55,10 +56,7 @@ gmau_settings.catList = xlib.makelistview{
 }
 
 gmau_settings.catList:AddColumn("Among Us Settings")
-
-gmau_settings.catList.Columns[1].DoClick = function()
-
-end
+gmau_settings.catList.Columns[1].DoClick = function() end
 
 gmau_settings.catList.OnRowSelected = function(self, LineID, Line)
 	local nPanel = xgui.modules.submodule[Line:GetValue(2)].panel
@@ -81,7 +79,6 @@ gmau_settings.catList.OnRowSelected = function(self, LineID, Line)
 		end
 
 		xlib.animQueue_start()
-
 		gmau_settings.curPanel = nPanel
 	else
 		xlib.addToAnimQueue("pnlSlide", {
@@ -92,10 +89,9 @@ gmau_settings.catList.OnRowSelected = function(self, LineID, Line)
 			endy = 0,
 			setvisible = false
 		})
+
 		self:ClearSelection()
-
 		gmau_settings.curPanel = nil
-
 		xlib.animQueue_start()
 	end
 
@@ -117,13 +113,13 @@ function gmau_settings.processModules()
 				module.panel:SetSize(275, 322)
 			end
 
-			if module.panel.scroll then --For DListLayouts
+			--For DListLayouts
+			if module.panel.scroll then
 				module.panel.scroll.panel = module.panel
 				module.panel = module.panel.scroll
 			end
 
 			module.panel:SetParent(gmau_settings.panel)
-
 			local line = gmau_settings.catList:AddLine(module.name, i)
 
 			if module.panel == gmau_settings.curPanel then
@@ -137,16 +133,19 @@ function gmau_settings.processModules()
 
 	gmau_settings.catList:SortByColumn(1, false)
 end
-gmau_settings.processModules()
 
+gmau_settings.processModules()
 xgui.hookEvent("onProcessModules", nil, gmau_settings.processModules)
 xgui.addModule("Among Us", gmau_settings, "icon16/gmau.png", "xgui_gmsettings")
 
 -----------------------------------------------------------------
 -------------------- MODULE: Game ----------------------------
 -----------------------------------------------------------------
-
-local gpnl = xlib.makelistlayout{w = 415, h = 318, parent = xgui.null}
+local gpnl = xlib.makelistlayout{
+	w = 415,
+	h = 318,
+	parent = xgui.null
+}
 
 local glst = vgui.Create("DPanelList", gpnl)
 glst:Dock(FILL)
@@ -209,11 +208,7 @@ glst:AddItem(xlib.makelabel{
 })
 
 glst:AddItem(xlib.makecombobox{
-	choices = {
-		"0 = Always",
-		"1 = Meetings",
-		"2 = Never"
-	},
+	choices = {"0 = Always", "1 = Meetings", "2 = Never"},
 	numOffset = 0,
 	repconvar = "rep_au_taskbar_updates",
 	parent = glst
@@ -225,8 +220,11 @@ xgui.addSubModule("Game", gpnl, nil, "gmau_settings")
 -------------------------------------------------------
 -------------------- MODULE: Meeting ------------------
 -------------------------------------------------------
-
-local mpnl = xlib.makelistlayout{w = 415, h = 318, parent = xgui.null}
+local mpnl = xlib.makelistlayout{
+	w = 415,
+	h = 318,
+	parent = xgui.null
+}
 
 local mlst = vgui.Create("DPanelList", mpnl)
 mlst:Dock(FILL)
@@ -295,8 +293,11 @@ xgui.addSubModule("Meetings", mpnl, nil, "gmau_settings")
 -------------------------------------------------------
 -------------------- MODULE: Tasks --------------------
 -------------------------------------------------------
-
-local tpnl = xlib.makelistlayout{w = 415, h = 318, parent = xgui.null}
+local tpnl = xlib.makelistlayout{
+	w = 415,
+	h = 318,
+	parent = xgui.null
+}
 
 local tlst = vgui.Create("DPanelList", tpnl)
 tlst:Dock(FILL)
@@ -341,8 +342,11 @@ xgui.addSubModule("Tasks", tpnl, nil, "gmau_settings")
 -------------------------------------------------------
 -------------------- MODULE: Other --------------------
 -------------------------------------------------------
-
-local opnl = xlib.makelistlayout{w = 415, h = 318, parent = xgui.null}
+local opnl = xlib.makelistlayout{
+	w = 415,
+	h = 318,
+	parent = xgui.null
+}
 
 local olst = vgui.Create("DPanelList", opnl)
 olst:Dock(FILL)
@@ -383,5 +387,4 @@ olst:AddItem(xlib.makecheckbox{
 
 xgui.hookEvent("onProcessModules", nil, opnl.processModules)
 xgui.addSubModule("Other", opnl, nil, "gmau_settings")
-
 hook.Run("GMAU UlxModifySettings", "gmau_settings")
