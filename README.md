@@ -1,4 +1,11 @@
+[steam-workshop]: https://steamcommunity.com/sharedfiles/filedetails/?id=2447545033
+
 # ULX Commands for Among Us
+
+[![Steam Subscriptions](https://img.shields.io/steam/subscriptions/2447545033?logo=steam)][steam-workshop]
+[![Steam Favorites](https://img.shields.io/steam/favorites/2447545033?logo=steam)][steam-workshop]
+[![Steam Update Date](https://img.shields.io/steam/update-date/2447545033?label=last%20updated&logo=steam)][steam-workshop]
+
 A modified version of the [TTT2-ULX-Addon](https://github.com/TTT-2/ttt2-ulx) by Alf21 for [GMAU](https://github.com/NotMyWing/GarrysModAmongUs).
 ## Admin Commands
 ### Respawning Commands
