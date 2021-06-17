@@ -227,15 +227,18 @@ function ulx.force(calling_ply, target_plys, target_role, should_silent)
 			elseif v:IsImposter() == imposter then
 				ULib.tsayError(calling_ply, v:Nick() .. " is already " .. target_role, true)
 			else
-				GAMEMODE.GameData.Imposters[v:GetAUPlayerTable()] = imposter
+				local plyTable = v:GetAUPlayerTable()
+				local imposters = {}
+        GAMEMODE.GameData.Imposters[plyTable] = imposter or nil
+        GAMEMODE:Player_RefreshKillCooldown(plyTable)
+
+        for ply, IsImposter in pairs(GAMEMODE.GameData.Imposters) do
+          table.insert(imposters, ply.entity)
+        end
 
 				for _, ply in ipairs(player.GetAll()) do
 					net.Start("UpdateImposters")
-
-					if (ply:IsImposter()) then
-						net.WriteTable(GAMEMODE.GameData.Imposters)
-					end
-
+					net.WriteTable(ply:IsImposter() and imposters or {})
 					net.Send(ply)
 				end
 
@@ -277,7 +280,19 @@ if SERVER then
 	util.AddNetworkString("UpdateImposters")
 else
 	net.Receive("UpdateImposters", function()
-		GAMEMODE.GameData.Imposters = net.ReadTable() or nil
+		GAMEMODE.GameData.Imposters = {}
+
+    for _, ply in ipairs(net.ReadTable()) do
+      GAMEMODE.GameData.Imposters[ply:GetAUPlayerTable()] = true
+    end
+
+		local imposter = LocalPlayer():IsImposter()
+		GAMEMODE:HUD_Reset()
+		GAMEMODE.Hud:SetupButtons(GAMEMODE.GameState.Playing, imposter)
+
+    if imposter then
+      GAMEMODE:HUD_InitializeImposterMap()
+    end
 	end)
 end
 
