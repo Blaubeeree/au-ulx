@@ -39,12 +39,23 @@ local function player_respawn(v)
 
 	local plyTable = v:GetAUPlayerTable()
 
-	if IsValid(plyTable.entity) then
-		plyTable.entity:SetRenderMode(RENDERMODE_NORMAL)
-		plyTable.entity:SetMoveType(MOVETYPE_WALK)
-		GAMEMODE:Player_Unhide(plyTable.entity)
+	if not plyTable then
+		error("Can't respawn that " .. v.Nick())
 	end
 
+	local point = ents.FindByClass("info_player_start")[1]
+	plyTable.entity:Spawn()
+
+	if point then
+		plyTable.entity:SetPos(point:GetPos())
+		plyTable.entity:SetAngles(point:GetAngles())
+		plyTable.entity:SetEyeAngles(point:GetAngles())
+	end
+
+	plyTable.entity:SetRenderMode(RENDERMODE_NORMAL)
+	plyTable.entity:SetMoveType(MOVETYPE_WALK)
+	plyTable.entity:UnSpectate()
+	GAMEMODE:Player_Unhide(plyTable.entity)
 	GAMEMODE.GameData.DeadPlayers[plyTable] = nil
 	GAMEMODE:Net_BroadcastDeadToGhosts()
 end
@@ -290,22 +301,7 @@ function ulx.respawn(calling_ply, target_plys, should_silent)
 			elseif GAMEMODE:SetGameCommencing() then
 				ULib.tsayError(calling_ply, "Waiting for players!", true)
 			elseif not v:GetAUPlayerTable() then
-				-- players arent really dead when they are spectating, we need to handle that correctly
-				v:ConCommand("au_spectator_mode 0") -- just incase they are in spectator mode take them out of it
-
-				--seems to be a slight delay from when you leave spec and when you can spawn this should get us around that
-				timer.Create("respawndelay", 0.1, 0, function()
-					player_respawn(v)
-					table.insert(affected_plys, v)
-					ulx.fancyLogAdmin(calling_ply, should_silent, "#A respawned #T!", affected_plys)
-					send_messages(affected_plys, "You have been respawned.")
-
-					if not v:IsDead() then
-						timer.Remove("respawndelay")
-
-						return
-					end
-				end)
+				ULib.tsayError(calling_ply, "Can't respawn a spectator!", true)
 			elseif not v:IsDead() then
 				ULib.tsayError(calling_ply, v:Nick() .. " is already alive!", true)
 			else
@@ -355,34 +351,8 @@ function ulx.respawntp(calling_ply, target_ply, should_silent)
 			ULib.tsayError(calling_ply, ulx.getExclusive(target_ply, calling_ply), true)
 		elseif GAMEMODE:SetGameCommencing() then
 			ULib.tsayError(calling_ply, "Waiting for players!", true)
-		elseif target_ply:GetAUPlayerTable() then
-			target_ply:ConCommand("au_spectator_mode 0")
-
-			--have to wait for gamemode before doing this
-			timer.Create("respawntpdelay", 0.1, 0, function()
-				local t = {}
-				t.start = calling_ply:GetPos() + Vector(0, 0, 32) -- Move them up a bit so they can travel across the ground
-				t.endpos = calling_ply:GetPos() + calling_ply:EyeAngles():Forward() * 16384
-				t.filter = target_ply
-
-				if target_ply ~= calling_ply then
-					t.filter = {target_ply, calling_ply}
-				end
-
-				local tr = util.TraceEntity(t, target_ply)
-				local pos = tr.HitPos
-				player_respawn(target_ply)
-				target_ply:SetPos(pos)
-				table.insert(affected_ply, target_ply)
-				ulx.fancyLogAdmin(calling_ply, should_silent, "#A respawned and teleported #T!", affected_ply)
-				send_messages(target_ply, "You have been respawned and teleported.")
-
-				if not target_ply:IsDead() then
-					timer.Remove("respawntpdelay")
-
-					return
-				end
-			end)
+		elseif not target_ply:GetAUPlayerTable() then
+			ULib.tsayError(calling_ply, "Can't respawn a spectator!", true)
 		elseif not target_ply:IsDead() then
 			ULib.tsayError(calling_ply, target_ply:Nick() .. " is already alive!", true)
 		else
