@@ -1,4 +1,4 @@
-local CATEGORY_NAME = "AU Admin"
+﻿local CATEGORY_NAME = "AU Admin"
 local gamemode_error = "The current gamemode is not among us!"
 
 -- Makes sure killing a player with slay or sslay is handeled correctly
@@ -74,9 +74,12 @@ local function player_respawn(v)
   plyTable.entity:SetRenderMode(RENDERMODE_NORMAL)
   plyTable.entity:SetMoveType(MOVETYPE_WALK)
   plyTable.entity:UnSpectate()
-  GAMEMODE:Player_Unhide(plyTable.entity)
   GAMEMODE.GameData.DeadPlayers[plyTable] = nil
   GAMEMODE:Net_BroadcastDeadToGhosts()
+
+  for ply in pairs(GAMEMODE.GameData.DeadPlayers) do
+    GAMEMODE:Player_HideForAlivePlayers(ply.entity)
+  end
 end
 
 --[[player_completetasks][Completes the tasks of a given player.]
