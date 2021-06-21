@@ -1,6 +1,25 @@
 local CATEGORY_NAME = "AU Admin"
 local gamemode_error = "The current gamemode is not among us!"
 
+-- Makes sure killing a player with slay or sslay is handeled correctly
+hook.Add("PlayerDeath", "HandlePlayerDeath", function(ply)
+  local plyTable = ply:GetAUPlayerTable()
+
+  if GAMEMODE:IsGameInProgress() and plyTable then
+    GAMEMODE:Player_SetDead(plyTable)
+    GAMEMODE:Player_CloseVGUI(plyTable)
+  end
+end)
+
+hook.Add("PlayerSilentDeath", "HandlePlayerSilentDeath", function(ply)
+  local plyTable = ply:GetAUPlayerTable()
+
+  if GAMEMODE:IsGameInProgress() and plyTable then
+    GAMEMODE:Player_SetDead(plyTable)
+    GAMEMODE:Player_CloseVGUI(plyTable)
+  end
+end)
+
 --[Global Helper Functions][Used by more than one command.]------------------------------------
 --[[send_messages][Sends messages to player(s)]
 @param  {[PlayerObject]} v       [The player(s) to send the message to.]
@@ -154,7 +173,7 @@ hook.Add("GMAU GameStart", "SlayPlayersNextRound", function()
         GAMEMODE:Player_MarkCrew(v)
       end
 
-      GAMEMODE:Player_SetDead(v)
+      v:Kill()
       table.insert(slayedPlayers, v)
     end
   end
@@ -490,8 +509,7 @@ function ulx.spec(calling_ply, target_plys, should_unspec)
         if GAMEMODE:IsGameInProgress() then
           local playerTable = v:GetAUPlayerTable()
           if not playerTable then return end
-          GAMEMODE:Player_SetDead(playerTable)
-          GAMEMODE:Player_CloseVGUI(playerTable)
+          v:Kill()
           -- If the player was a crewmate and he had tasks, complete his tasks.
           if not GAMEMODE.GameData.Tasks or not GAMEMODE.GameData.Tasks[playerTable] or GAMEMODE.GameData.Imposters[playerTable] then return end
           player_completetasks(v)
