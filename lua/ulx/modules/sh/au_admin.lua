@@ -1,4 +1,4 @@
-﻿local CATEGORY_NAME = "AU Admin"
+local CATEGORY_NAME = "AU Admin"
 local gamemode_error = "The current gamemode is not among us!"
 
 --[Global Helper Functions][Used by more than one command.]------------------------------------
@@ -58,6 +58,19 @@ local function player_respawn(v)
   GAMEMODE:Player_Unhide(plyTable.entity)
   GAMEMODE.GameData.DeadPlayers[plyTable] = nil
   GAMEMODE:Net_BroadcastDeadToGhosts()
+end
+
+--[[player_completetasks][Completes the tasks of a given player.]
+@param  {[PlayerObject]} v [The player whos tasks to complete.]
+--]]
+local function player_completetasks(v)
+  for name, task in pairs(GAMEMODE.GameData.Tasks[v:GetAUPlayerTable()]) do
+    task:SetCompleted(true)
+  end
+
+  if not GAMEMODE:IsMeetingInProgress() then
+    GAMEMODE:Game_CheckWin()
+  end
 end
 
 --[Slay next round]---------------------------------------------------------------------------------
@@ -201,6 +214,54 @@ hook.Add("PlayerSpawn", "Inform", function(ply)
   end
 end)
 
+--[Complete Tasks]------------------------------------------------------------------------------------
+--[[ulx.completetasks][Completes the tasks of < target(s) > ]
+@param  {[PlayerObject]} calling_ply   [The player who used the command.]
+@param  {[PlayerObject]} target_plys   [The player(s) who will have the effects of the command applied to them.]
+@param  {[Boolean]}      should_silent [Hidden, determines weather the output will be silent or not.]
+--]]
+function ulx.completetasks(calling_ply, target_plys, should_silent)
+  if GetConVar("gamemode"):GetString() ~= "amongus" then
+    ULib.tsayError(calling_ply, gamemode_error, true)
+  else
+    local affected_plys = {}
+
+    for i = 1, #target_plys do
+      local v = target_plys[i]
+
+      if ulx.getExclusive(v, calling_ply) then
+        ULib.tsayError(calling_ply, ulx.getExclusive(v, calling_ply), true)
+      elseif not GAMEMODE:IsGameInProgress() then
+        ULib.tsayError(calling_ply, "The round has not begun!", true)
+      elseif not v:GetAUPlayerTable() then
+        ULib.tsayError(calling_ply, "Can't complete tasks of a spectator!", true)
+      else
+        player_completetasks(v)
+        table.insert(affected_plys, v)
+        ulx.fancyLogAdmin(calling_ply, should_silent, "#A completed tasks of #T!", affected_plys)
+        send_messages(affected_plys, "Your tasks have been completed.")
+      end
+    end
+  end
+end
+
+local completetasks = ulx.command(CATEGORY_NAME, "ulx completetasks", ulx.completetasks, "!ct")
+
+completetasks:addParam{
+  type = ULib.cmds.PlayersArg
+}
+
+completetasks:addParam{
+  type = ULib.cmds.BoolArg,
+  invisible = true
+}
+
+completetasks:defaultAccess(ULib.ACCESS_SUPERADMIN)
+
+completetasks:setOpposite("ulx scompletetasks", {nil, nil, true}, "!sct", true)
+
+completetasks:help("Completes tasks of <target(s)>.")
+
 --[Force role]---------------------------------------------------------------------------------
 --[[ulx.force][Forces < target(s) > to become a specified role.]
 @param  {[PlayerObject]} calling_ply   [The player who used the command.]
@@ -313,8 +374,8 @@ function ulx.respawn(calling_ply, target_plys, should_silent)
 
       if ulx.getExclusive(v, calling_ply) then
         ULib.tsayError(calling_ply, ulx.getExclusive(v, calling_ply), true)
-      elseif GAMEMODE:SetGameCommencing() then
-        ULib.tsayError(calling_ply, "Waiting for players!", true)
+      elseif not GAMEMODE:IsGameInProgress() then
+        ULib.tsayError(calling_ply, "The round has not begun!", true)
       elseif not v:GetAUPlayerTable() then
         ULib.tsayError(calling_ply, "Can't respawn a spectator!", true)
       elseif not v:IsDead() then
@@ -364,8 +425,8 @@ function ulx.respawntp(calling_ply, target_ply, should_silent)
       return
     elseif ulx.getExclusive(target_ply, calling_ply) then
       ULib.tsayError(calling_ply, ulx.getExclusive(target_ply, calling_ply), true)
-    elseif GAMEMODE:SetGameCommencing() then
-      ULib.tsayError(calling_ply, "Waiting for players!", true)
+    elseif not GAMEMODE:IsGameInProgress() then
+      ULib.tsayError(calling_ply, "The round has not begun!", true)
     elseif not target_ply:GetAUPlayerTable() then
       ULib.tsayError(calling_ply, "Can't respawn a spectator!", true)
     elseif not target_ply:IsDead() then
@@ -433,14 +494,7 @@ function ulx.spec(calling_ply, target_plys, should_unspec)
           GAMEMODE:Player_CloseVGUI(playerTable)
           -- If the player was a crewmate and he had tasks, complete his tasks.
           if not GAMEMODE.GameData.Tasks or not GAMEMODE.GameData.Tasks[playerTable] or GAMEMODE.GameData.Imposters[playerTable] then return end
-
-          for name, task in pairs(GAMEMODE.GameData.Tasks[playerTable]) do
-            task:SetCompleted(true)
-          end
-
-          if not GAMEMODE:IsMeetingInProgress() then
-            GAMEMODE:Game_CheckWin()
-          end
+          player_completetasks(v)
         end
       end
     end
