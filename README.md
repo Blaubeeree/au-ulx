@@ -18,11 +18,12 @@ A modified version of the [TTT2-ULX-Addon](https://github.com/TTT-2/ttt2-ulx) by
 
 ### AFK Players
 - ulx fspec <players> - Forces the target player into the afk mode.
-- ulx unafk <players> - Forces the target player back into player mode (opposite to the afk command.)
+- ulx unspec <players> - Forces the target player back into player mode (opposite to the fspec command.)
 
 ### Misc
 - ulx slaynr <player> <amount> - Carries out the set amount of slays at every round start.
 - ulx roundrestart - Restarts the current round.
+- ulx completetasks - Completes tasks of target player. Has silent echos opposite.
 
 ## Voting Commands
 - ulx votesnr <player> - Triggers a vote to slay the player the following round.
