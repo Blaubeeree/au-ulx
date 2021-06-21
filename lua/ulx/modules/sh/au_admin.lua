@@ -423,9 +423,25 @@ function ulx.spec(calling_ply, target_plys, should_unspec)
       if should_unspec then
         v:ConCommand("au_spectator_mode 0")
       else
-        v:Kill()
         v:ConCommand("au_spectator_mode 1")
         v:ConCommand("au_cl_idlepopup")
+
+        if GAMEMODE:IsGameInProgress() then
+          local playerTable = v:GetAUPlayerTable()
+          if not playerTable then return end
+          GAMEMODE:Player_SetDead(playerTable)
+          GAMEMODE:Player_CloseVGUI(playerTable)
+          -- If the player was a crewmate and he had tasks, complete his tasks.
+          if not GAMEMODE.GameData.Tasks or not GAMEMODE.GameData.Tasks[playerTable] or GAMEMODE.GameData.Imposters[playerTable] then return end
+
+          for name, task in pairs(GAMEMODE.GameData.Tasks[playerTable]) do
+            task:SetCompleted(true)
+          end
+
+          if not GAMEMODE:IsMeetingInProgress() then
+            GAMEMODE:Game_CheckWin()
+          end
+        end
       end
     end
 
@@ -452,7 +468,7 @@ spec:defaultAccess(ULib.ACCESS_ADMIN)
 
 spec:setOpposite("ulx unspec", {nil, nil, true}, "!unspec")
 
-spec:help("Forces the <target(s)> to/from spectator.")
+spec:help("Forces the <target(s)> to spectator and completes their tasks.")
 
 --[Force next round]-------------------------------------------------------------------------
 --[[ulx.spec][Forces < target(s) > to and from spectator.]
